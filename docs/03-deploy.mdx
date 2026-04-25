@@ -238,12 +238,16 @@ resource "azurerm_linux_virtual_machine" "edge" {
 
 ### Cloud-Init Provisioning
 
-Create `cloud-init.yaml`:
+Create `cloud-init.yaml`. This installs NGINX and deploys the full CDN edge configuration with headers from all five major CDN vendors. See [NGINX Configuration](../04-nginx-config/) for the complete header reference.
 
 ```yaml
 #cloud-config
 package_update: true
 package_upgrade: true
+
+bootcmd:
+  - mkdir -p /var/cache/nginx/cdn
+  - chown www-data:www-data /var/cache/nginx/cdn
 
 packages:
   - nginx
@@ -258,37 +262,113 @@ write_files:
                        inactive=60m
                        use_temp_path=off;
 
+      map $request_id $cdn_ray_id {
+          default "${request_id}-SJC";
+      }
+      map $request_id $cdn_azure_ref {
+          default "0${request_id}AAAAAA";
+      }
+      map $request_id $cdn_amz_cf_id {
+          default "E1${request_id}==";
+      }
+      map $http_user_agent $is_mobile {
+          default "false";
+          "~*Mobile|Android|iPhone|iPod|BlackBerry|Opera Mini|IEMobile" "true";
+      }
+      map $http_user_agent $is_tablet {
+          default "false";
+          "~*iPad|Android(?!.*Mobile)|Tablet|Kindle|PlayBook" "true";
+      }
+      map $http_user_agent $is_desktop {
+          default "true";
+          "~*Mobile|Android|iPhone|iPod|BlackBerry|Opera Mini|IEMobile|iPad|Tablet|Kindle|PlayBook" "false";
+      }
+
       server {
           listen 80;
           server_name _;
 
           location /health {
               access_log off;
-              return 200 '{"status":"healthy","component":"cdn-edge","engine":"nginx"}';
+              return 200 '{"status":"healthy","component":"cdn-edge","engine":"nginx","vendor_profiles":["akamai","cloudflare","cloudfront","fastly","azure-front-door"]}';
               add_header Content-Type application/json;
           }
 
           location / {
               proxy_pass ${origin_server};
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;
 
-              # CDN caching configuration
+              # Industry standard headers
+              proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto  $scheme;
+              proxy_set_header X-Forwarded-Host   $host;
+              proxy_set_header X-Real-IP          $remote_addr;
+              proxy_set_header Via                "1.1 cdn-simulator";
+              proxy_set_header CDN-Loop           "cdn-simulator";
+
+              # Akamai
+              proxy_set_header True-Client-IP              $remote_addr;
+              proxy_set_header X-Akamai-Edgescape          "georegion=263,country_code=US,region_code=CA,city=SANJOSE,dma=807,lat=37.3353,long=-121.8938,timezone=PST,continent=NA,throughput=vhigh,asnum=7018,network_type=broadband";
+              proxy_set_header X-Akamai-Device-Characteristics "is_mobile=$is_mobile;is_tablet=$is_tablet;is_wireless_device=$is_mobile";
+              proxy_set_header X-Akamai-Request-ID         $request_id;
+
+              # Cloudflare
+              proxy_set_header CF-Connecting-IP    $remote_addr;
+              proxy_set_header CF-IPCountry        "US";
+              proxy_set_header cf-ipcity           "San Jose";
+              proxy_set_header cf-ipcontinent      "NA";
+              proxy_set_header cf-iplatitude       "37.3353";
+              proxy_set_header cf-iplongitude      "-121.8938";
+              proxy_set_header cf-region           "California";
+              proxy_set_header cf-region-code      "CA";
+              proxy_set_header cf-timezone         "America/Los_Angeles";
+              proxy_set_header Cf-Ray             $cdn_ray_id;
+              proxy_set_header CF-Visitor         '{"scheme":"https"}';
+              proxy_set_header cf-bot-score       "85";
+              proxy_set_header cf-ja3-hash        "e7d705a3286e19ea42f587b344ee6865";
+
+              # Amazon CloudFront
+              proxy_set_header CloudFront-Viewer-Address         "$remote_addr:$remote_port";
+              proxy_set_header CloudFront-Viewer-Country         "US";
+              proxy_set_header CloudFront-Viewer-Country-Name    "United States";
+              proxy_set_header CloudFront-Viewer-City            "San Jose";
+              proxy_set_header CloudFront-Viewer-Latitude        "37.33530";
+              proxy_set_header CloudFront-Viewer-Longitude       "-121.89300";
+              proxy_set_header CloudFront-Viewer-TLS             "TLSv1.3:TLS_AES_128_GCM_SHA256:sessionResumed";
+              proxy_set_header CloudFront-Is-Desktop-Viewer      $is_desktop;
+              proxy_set_header CloudFront-Is-Mobile-Viewer       $is_mobile;
+              proxy_set_header CloudFront-Is-Tablet-Viewer       $is_tablet;
+              proxy_set_header X-Amz-Cf-Id                       $cdn_amz_cf_id;
+
+              # Fastly
+              proxy_set_header Fastly-Client-IP    $remote_addr;
+              proxy_set_header Fastly-SSL          "1";
+              proxy_set_header X-Geo-Country-Code  "US";
+              proxy_set_header X-Geo-City          "San Jose";
+              proxy_set_header X-Geo-Region        "CA";
+              proxy_set_header X-Geo-Continent-Code "NA";
+
+              # Azure Front Door
+              proxy_set_header X-Azure-ClientIP    $remote_addr;
+              proxy_set_header X-Azure-SocketIP    $remote_addr;
+              proxy_set_header X-Azure-Ref         $cdn_azure_ref;
+              proxy_set_header X-Azure-FDID        "a0a0a0a0-bbbb-cccc-dddd-e1e1e1e1e1e1";
+
+              # CDN caching
+              proxy_set_header Host $host;
               proxy_cache cdn_cache;
               proxy_cache_valid 200 301 302 10m;
               proxy_cache_valid 404 1m;
               proxy_cache_key "$scheme$host$request_uri";
               proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
-
-              # Cache status header — visible to clients
-              add_header X-Cache-Status $upstream_cache_status always;
-              add_header X-CDN-Edge "cdn-simulator" always;
-
-              # Respect origin Cache-Control headers
               proxy_ignore_headers Set-Cookie;
               proxy_cache_bypass $http_cache_control;
+
+              # Response headers
+              add_header X-Cache-Status     $upstream_cache_status always;
+              add_header X-CDN-Edge         "cdn-simulator" always;
+              add_header X-CDN-POP          "SJC" always;
+              add_header X-Served-By        "cache-sjc3120-SJC" always;
+              add_header X-Request-ID       $request_id always;
           }
       }
 
@@ -296,8 +376,8 @@ write_files:
     content: ""
 
 runcmd:
-  - mkdir -p /var/cache/nginx/cdn
-  - chown www-data:www-data /var/cache/nginx/cdn
+  - rm -f /etc/nginx/sites-enabled/default
+  - chown -R www-data:www-data /var/cache/nginx/cdn
   - nginx -t
   - systemctl enable nginx
   - systemctl restart nginx
