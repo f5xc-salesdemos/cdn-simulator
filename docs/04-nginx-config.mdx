@@ -1,20 +1,140 @@
 ---
 title: NGINX Configuration
-description: CDN edge caching, proxy, and TLS configuration reference
+description: CDN edge caching, vendor header simulation, and proxy configuration reference
 sidebar:
   order: 4
 ---
 
-The cloud-init provisioning deploys a working NGINX CDN edge configuration automatically. This page documents the configuration in detail and covers optional customizations.
+The cloud-init provisioning deploys a working NGINX CDN edge configuration automatically. This page documents the configuration in detail, covering the multi-vendor header simulation, caching behavior, and optional customizations.
 
 ## Default Configuration
 
-The deployed configuration lives at `/etc/nginx/conf.d/cdn-edge.conf` on the VM. It provides:
+The deployed configuration at `/etc/nginx/conf.d/cdn-edge.conf` provides:
 
 - Disk-based response caching (1 GB max, 60-minute inactive eviction)
 - Reverse proxy to the configured origin server
+- **67+ CDN vendor headers** simulating Akamai, Cloudflare, CloudFront, Fastly, and Azure Front Door
+- Device detection (mobile, tablet, desktop) from User-Agent
+- Per-request unique identifiers in vendor-specific formats
 - `X-Cache-Status` header reporting `HIT`, `MISS`, `BYPASS`, `EXPIRED`, or `STALE`
 - Health check endpoint at `/health`
+
+## CDN Vendor Headers
+
+The simulator injects headers from all five major CDN vendors simultaneously. This is intentional — it allows F5 XC to be configured with any vendor's "Trusted Client IP Header" and see realistic header payloads regardless of which CDN is being simulated.
+
+### Industry Standard Headers (All CDNs)
+
+| Header | Value | Purpose |
+|---|---|---|
+| `X-Forwarded-For` | Client IP chain | Standard forwarded IP |
+| `X-Forwarded-Proto` | `http` or `https` | Original client protocol |
+| `X-Forwarded-Host` | Original hostname | Original Host header |
+| `X-Real-IP` | Client IP | Single client IP (nginx convention) |
+| `Via` | `1.1 cdn-simulator` | Proxy identification |
+| `Forwarded` | RFC 7239 format | Standardized forwarding header |
+| `CDN-Loop` | `cdn-simulator` | Loop detection |
+
+### Akamai Headers
+
+| Header | Value | Purpose |
+|---|---|---|
+| `True-Client-IP` | Client IP | Original end-user IP address |
+| `X-Akamai-Edgescape` | Compound geo string | Full geolocation, network, throughput data in key=value format |
+| `X-Akamai-Device-Characteristics` | Device properties | Brand, model, OS, mobile/tablet flags, screen resolution |
+| `X-Akamai-Request-ID` | Request UUID | Unique request identifier |
+
+The `X-Akamai-Edgescape` header contains: `georegion`, `country_code`, `region_code`, `city`, `dma`, `lat`, `long`, `timezone`, `zip`, `continent`, `throughput`, `bw`, `network`, `asnum`, `network_type`.
+
+### Cloudflare Headers
+
+| Header | Value | Purpose |
+|---|---|---|
+| `CF-Connecting-IP` | Client IP | True client IP (always present) |
+| `CF-IPCountry` | `US` | Two-letter country code |
+| `cf-ipcity` | `San Jose` | Client city |
+| `cf-ipcontinent` | `NA` | Continent code |
+| `cf-iplatitude` / `cf-iplongitude` | Coordinates | Geolocation |
+| `cf-region` / `cf-region-code` | `California` / `CA` | Region info |
+| `cf-timezone` | `America/Los_Angeles` | IANA timezone |
+| `Cf-Ray` | `{request_id}-SJC` | Unique ray ID with POP IATA code |
+| `CF-Visitor` | `{"scheme":"https"}` | Visitor protocol info |
+| `cf-bot-score` | `85` | Bot score (1=bot, 99=human) |
+| `cf-verified-bot` | `false` | Known good bot flag |
+| `cf-ja3-hash` | TLS fingerprint hash | JA3 TLS fingerprint |
+| `cf-ja4` | TLS fingerprint | JA4 TLS fingerprint |
+
+### Amazon CloudFront Headers
+
+| Header | Value | Purpose |
+|---|---|---|
+| `CloudFront-Viewer-Address` | `IP:port` | Client IP and source port |
+| `CloudFront-Viewer-Country` | `US` | Country code |
+| `CloudFront-Viewer-Country-Name` | `United States` | Full country name |
+| `CloudFront-Viewer-Country-Region` | `CA` | Region code |
+| `CloudFront-Viewer-Country-Region-Name` | `California` | Full region name |
+| `CloudFront-Viewer-City` | `San Jose` | Client city |
+| `CloudFront-Viewer-Latitude` / `Longitude` | Coordinates | Geolocation |
+| `CloudFront-Viewer-Time-Zone` | `America/Los_Angeles` | IANA timezone |
+| `CloudFront-Viewer-ASN` | `7018` | Autonomous System Number |
+| `CloudFront-Viewer-Http-Version` | `2.0` | Client HTTP version |
+| `CloudFront-Viewer-TLS` | TLS version + cipher | TLS connection details |
+| `CloudFront-Viewer-JA3-Fingerprint` | Hash | JA3 TLS fingerprint |
+| `CloudFront-Is-Desktop-Viewer` | `true`/`false` | Device detection |
+| `CloudFront-Is-Mobile-Viewer` | `true`/`false` | Device detection |
+| `CloudFront-Is-Tablet-Viewer` | `true`/`false` | Device detection |
+| `X-Amz-Cf-Id` | Encoded ID | CloudFront request identifier |
+
+### Fastly Headers
+
+| Header | Value | Purpose |
+|---|---|---|
+| `Fastly-Client-IP` | Client IP | True client IP |
+| `Fastly-SSL` | `1` | Connection was over TLS |
+| `Fastly-Client` | `1` | Client-facing request (not shield) |
+| `Fastly-FF` | `cache-sjc3120-SJC` | Cache node identification |
+| `X-Geo-Country-Code` | `US` | Country (VCL variable convention) |
+| `X-Geo-Country-Code3` | `USA` | Three-letter country code |
+| `X-Geo-Country-Name` | `United States` | Full country name |
+| `X-Geo-City` | `San Jose` | Client city |
+| `X-Geo-Region` | `CA` | Region code |
+| `X-Geo-Continent-Code` | `NA` | Continent |
+| `X-Geo-Latitude` / `X-Geo-Longitude` | Coordinates | Geolocation |
+| `X-Geo-ASN` | `7018` | Autonomous System Number |
+| `X-Geo-Conn-Speed` | `broadband` | Connection speed class |
+| `X-Geo-Conn-Type` | `wired` | Connection type |
+
+### Azure Front Door Headers
+
+| Header | Value | Purpose |
+|---|---|---|
+| `X-Azure-ClientIP` | Client IP | Client IP address |
+| `X-Azure-SocketIP` | Client IP | TCP socket source IP |
+| `X-Azure-Ref` | Encoded ref string | Unique request reference for troubleshooting |
+| `X-Azure-FDID` | UUID | Front Door resource identifier |
+| `X-Azure-RequestChain` | `hops=1` | Loop detection hop count |
+
+### Response Headers (Added to Client Responses)
+
+| Header | Value | Purpose |
+|---|---|---|
+| `X-Cache-Status` | `HIT`/`MISS`/`BYPASS`/`EXPIRED`/`STALE` | Cache behavior |
+| `X-CDN-Edge` | `cdn-simulator` | Edge identification |
+| `X-CDN-POP` | `SJC` | Point of Presence code |
+| `X-Served-By` | `cache-sjc3120-SJC` | Serving cache node |
+| `X-Request-ID` | UUID | Per-request unique identifier |
+
+## Device Detection
+
+The simulator detects device type from the `User-Agent` header using NGINX `map` directives:
+
+- **Mobile**: Matches iPhone, Android (non-tablet), iPod, BlackBerry, Opera Mini, IEMobile
+- **Tablet**: Matches iPad, Android tablet, Kindle, PlayBook
+- **Desktop**: Default when neither mobile nor tablet matches
+
+Device type is reflected in:
+- `CloudFront-Is-Desktop-Viewer` / `CloudFront-Is-Mobile-Viewer` / `CloudFront-Is-Tablet-Viewer`
+- `X-Akamai-Device-Characteristics` (`is_mobile`, `is_tablet`, `is_wireless_device` fields)
 
 ## Cache Configuration
 
@@ -35,7 +155,6 @@ proxy_cache_path /var/cache/nginx/cdn
 | `keys_zone=cdn_cache:10m` | 10 MB shared memory zone | Stores cache keys and metadata (~80,000 keys) |
 | `max_size=1g` | 1 GB disk limit | Total cached content on disk; oldest entries evicted first |
 | `inactive=60m` | 60-minute inactivity timeout | Entries not accessed within 60 minutes are eligible for removal |
-| `use_temp_path=off` | Write directly to cache dir | Avoids unnecessary file copies between temp and cache directories |
 
 ### Cache Behavior
 
@@ -47,171 +166,22 @@ proxy_cache_key "$scheme$host$request_uri";
 proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
 ```
 
-| Directive | Purpose |
-|---|---|
-| `proxy_cache_valid 200 301 302 10m` | Cache successful and redirect responses for 10 minutes |
-| `proxy_cache_valid 404 1m` | Cache 404s for 1 minute to avoid hammering origin for missing content |
-| `proxy_cache_key` | Cache key includes scheme, host, and full URI — distinct entries per hostname |
-| `proxy_cache_use_stale` | Serve stale cached content when origin returns errors or times out |
-
-### Cache Status Header
-
-```nginx
-add_header X-Cache-Status $upstream_cache_status always;
-```
-
-The `X-Cache-Status` header is added to every response:
-
-| Value | Meaning |
-|---|---|
-| `HIT` | Response served from cache |
-| `MISS` | Response fetched from origin and now cached |
-| `BYPASS` | Cache was bypassed (client sent `Cache-Control` header) |
-| `EXPIRED` | Cached entry had expired; refreshed from origin |
-| `STALE` | Origin unavailable; serving stale cached content |
-| `UPDATING` | Stale content served while cache is being refreshed in background |
-
-## Proxy Headers
-
-```nginx
-proxy_set_header Host $host;
-proxy_set_header X-Real-IP $remote_addr;
-proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-proxy_set_header X-Forwarded-Proto $scheme;
-```
-
-These headers pass client information through to the origin server (F5 XC HTTP load balancer), preserving the original client IP and protocol for logging and policy decisions.
-
 ## Changing the Origin Server
 
 To update the origin server after deployment, SSH into the VM and edit the NGINX configuration:
 
 ```bash
-# SSH into the edge node
 ssh azureuser@<PUBLIC_IP>
-
-# Edit the CDN edge config
-sudo nano /etc/nginx/conf.d/cdn-edge.conf
-# Change the proxy_pass directive to the new origin URL
-
-# Test configuration
-sudo nginx -t
-
-# Reload without downtime
-sudo systemctl reload nginx
-```
-
-Alternatively, update the `origin_server` variable in `terraform.tfvars` and run `terraform apply` to reprovision the VM with the new origin.
-
-## Optional: TLS with Self-Signed Certificate
-
-For HTTPS termination at the edge using a self-signed certificate:
-
-```bash
-# SSH into the edge node
-ssh azureuser@<PUBLIC_IP>
-
-# Generate self-signed certificate
-sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout /etc/ssl/private/cdn-edge.key \
-  -out /etc/ssl/certs/cdn-edge.crt \
-  -subj "/CN=cdn-edge-simulator"
-
-# Add TLS server block to /etc/nginx/conf.d/cdn-edge.conf
-```
-
-Add an HTTPS server block:
-
-```nginx
-server {
-    listen 443 ssl;
-    server_name _;
-
-    ssl_certificate     /etc/ssl/certs/cdn-edge.crt;
-    ssl_certificate_key /etc/ssl/private/cdn-edge.key;
-    ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_ciphers         HIGH:!aNULL:!MD5;
-
-    location /health {
-        access_log off;
-        return 200 '{"status":"healthy","component":"cdn-edge","engine":"nginx","tls":true}';
-        add_header Content-Type application/json;
-    }
-
-    location / {
-        proxy_pass https://your-origin.example.com;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        proxy_cache cdn_cache;
-        proxy_cache_valid 200 301 302 10m;
-        proxy_cache_valid 404 1m;
-        proxy_cache_key "$scheme$host$request_uri";
-        proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
-
-        add_header X-Cache-Status $upstream_cache_status always;
-        add_header X-CDN-Edge "cdn-simulator" always;
-
-        proxy_ignore_headers Set-Cookie;
-        proxy_cache_bypass $http_cache_control;
-    }
-}
-```
-
-```bash
-# Test and reload
+sudo sed -i 's|proxy_pass .*;|proxy_pass https://your-f5xc-lb.example.com;|' /etc/nginx/conf.d/cdn-edge.conf
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-## Optional: Let's Encrypt TLS
-
-If you have a domain name pointing to the edge node's public IP:
-
-```bash
-# Install certbot
-sudo apt install -y certbot python3-certbot-nginx
-
-# Obtain certificate (replace with your domain)
-sudo certbot --nginx -d cdn-edge.yourdomain.com --non-interactive --agree-tos -m your@email.com
-
-# Certbot automatically configures NGINX and sets up renewal
-```
+Alternatively, update the `origin_server` variable in `terraform.tfvars` and run `terraform apply` to reprovision the VM.
 
 ## Clearing the Cache
 
-To manually purge all cached content:
-
 ```bash
 ssh azureuser@<PUBLIC_IP>
-
-# Remove all cached files
 sudo rm -rf /var/cache/nginx/cdn/*
-
-# Reload NGINX to reset cache metadata
 sudo systemctl reload nginx
-```
-
-## Tuning for Larger Workloads
-
-For scenarios requiring more cache capacity:
-
-```nginx
-proxy_cache_path /var/cache/nginx/cdn
-                 levels=1:2
-                 keys_zone=cdn_cache:50m
-                 max_size=10g
-                 inactive=24h
-                 use_temp_path=off;
-```
-
-Increase the VM disk size in `variables.tf` if the cache exceeds the default 30 GB OS disk:
-
-```hcl
-os_disk {
-  caching              = "ReadWrite"
-  storage_account_type = "Premium_LRS"
-  disk_size_gb         = 64
-}
 ```
