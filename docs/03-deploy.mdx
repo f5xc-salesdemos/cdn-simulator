@@ -78,7 +78,7 @@ variable "ssh_public_key_path" {
 variable "origin_server" {
   description = "Origin server URL that the CDN edge forwards cache misses to (e.g., the F5 XC HTTP LB VIP). Use scheme://host format."
   type        = string
-  default     = "https://origin.example.com"
+  default     = "http://20.12.78.159"
 }
 
 variable "environment_tag" {
@@ -425,7 +425,7 @@ location            = "eastus2"
 vm_size             = "Standard_B2s"
 admin_username      = "azureuser"
 ssh_public_key_path = "~/.ssh/id_ed25519.pub"
-origin_server       = "https://your-f5xc-lb.example.com"
+origin_server       = "http://20.12.78.159"
 environment_tag     = "lab"
 ```
 

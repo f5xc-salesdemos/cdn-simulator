@@ -1,139 +1,204 @@
 ---
-title: Integrate with F5 XC
-description: Configure the CDN edge NGINX proxy_pass to forward to an F5 XC HTTP load balancer VIP as the origin server, set up DNS or hosts file routing, and verify end-to-end request flow including WAF policy enforcement through the CDN layer
+title: Integrate with Origin Server
+description: Connect the CDN edge to the origin-server lab component (direct integration), discover applications via the published endpoint manifest, verify end-to-end traffic flow with header inspection and log correlation. Covers both direct origin and future F5 XC insertion architectures.
 sidebar:
   order: 6
 ---
 
-This page covers how to wire the CDN edge node into a multi-vendor lab architecture where F5 Distributed Cloud serves as the origin behind the CDN edge.
+This page covers two integration stages:
 
-## Architecture
+1. **Direct integration** — CDN edge forwards to the origin server directly (baseline testing)
+2. **F5 XC insertion** — F5 XC HTTP load balancer inserted between CDN and origin (security demo)
 
-```
-┌──────────┐     ┌──────────────────────┐     ┌──────────────────────┐     ┌────────────┐
-│  Client   │────▶│  CDN Edge (NGINX)    │────▶│  F5 XC HTTP LB       │────▶│ Origin App │
-│  Browser  │     │  This component      │     │  WAF + Bot + DDoS     │     │  Backend   │
-└──────────┘     │  Azure VM            │     │  Security policies    │     └────────────┘
-                 │  Public IP: x.x.x.x  │     │  VIP: lb.example.com  │
-                 └──────────────────────┘     └──────────────────────┘
-```
+Start with direct integration to establish the baseline, then insert F5 XC when ready.
 
-The CDN edge node is a transparent caching layer. From F5 XC's perspective, the edge node is just another client. From the CDN's perspective, F5 XC is the origin server.
+## Origin Server Reference
 
-## Step 1: Set the Origin Server
+The [origin-server](https://f5xc-salesdemos.github.io/origin-server/) lab component provides vulnerable web applications for security testing.
 
-Update the NGINX configuration to point to your F5 XC HTTP load balancer VIP.
+| Property | Value |
+|---|---|
+| Documentation | [f5xc-salesdemos.github.io/origin-server](https://f5xc-salesdemos.github.io/origin-server/) |
+| Repository | [github.com/f5xc-salesdemos/origin-server](https://github.com/f5xc-salesdemos/origin-server) |
+| Default Port | 80 |
+| Health Check | `GET /health` |
 
-### Option A: During Terraform Deployment
+### Applications Available
 
-Set the `origin_server` variable in `terraform.tfvars` before running `terraform apply`:
-
-```hcl
-origin_server = "https://your-f5xc-lb.example.com"
-```
-
-### Option B: After Deployment
-
-SSH into the VM and update the NGINX config:
+Fetch the current application catalog from the origin-server's published manifest:
 
 ```bash
-ssh azureuser@<PUBLIC_IP>
+MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5xc-salesdemos/origin-server/releases/latest \
+  | python3 -c "import sys,json; assets=json.load(sys.stdin).get('assets',[]); print(next((a['browser_download_url'] for a in assets if a['name']=='manifest.json'),''))")
+curl -sf "$MANIFEST_URL" | python3 -m json.tool
+```
 
-# Edit the CDN edge config
-sudo sed -i 's|proxy_pass .*;|proxy_pass https://your-f5xc-lb.example.com;|' \
-  /etc/nginx/conf.d/cdn-edge.conf
+If no release exists yet, use the repository source directly:
 
-# Verify and reload
+```bash
+curl -sf https://raw.githubusercontent.com/f5xc-salesdemos/origin-server/main/manifest.json | python3 -m json.tool
+```
+
+The manifest lists all application paths, health checks, container images, and demo feature mappings.
+
+### Application Paths
+
+| Path | Application | Demo Features |
+|---|---|---|
+| `/` | Landing page | — |
+| `/health` | Health check | — |
+| `/juice-shop/` | OWASP Juice Shop | WAF, Bot Defense, API Security |
+| `/dvwa/` | DVWA | WAF, Bot Defense |
+| `/vampi/` | VAmPI | API Security |
+| `/httpbin/` | httpbin | Diagnostics |
+| `/whoami/` | whoami | Header verification |
+| `/csd-demo/` | CSD Demo | Client-Side Defense |
+
+## Stage 1: Direct Integration (Baseline)
+
+```
+┌──────────┐     ┌──────────────────────┐     ┌─────────────────────┐
+│  Client   │────▶│  CDN Edge (NGINX)    │────▶│  Origin Server      │
+│           │     │  20.65.90.112        │     │  20.12.78.159       │
+└──────────┘     │  67+ CDN headers     │     │  Juice Shop, DVWA,  │
+                 │  Disk cache           │     │  VAmPI, httpbin,    │
+                 └──────────────────────┘     │  whoami, CSD Demo   │
+                                              └─────────────────────┘
+```
+
+### Configure the Origin
+
+Set the origin server IP in the CDN edge NGINX config:
+
+```bash
+ssh azureuser@<CDN_EDGE_IP>
+sudo sed -i 's|proxy_pass .*;|proxy_pass http://<ORIGIN_IP>;|' /etc/nginx/conf.d/cdn-edge.conf
+sudo rm -rf /var/cache/nginx/cdn/*
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-## Step 2: Configure DNS or Host Resolution
+Or set it at Terraform deploy time via `terraform.tfvars`:
 
-Route client traffic through the CDN edge first. Choose one approach:
-
-### Option A: DNS Record (Production-like)
-
-Create a DNS A record pointing your application domain to the CDN edge's public IP:
-
-```
-app.yourdomain.com  A  <CDN_EDGE_PUBLIC_IP>
+```hcl
+origin_server = "http://<ORIGIN_IP>"
 ```
 
-### Option B: Hosts File (Quick Lab Testing)
+### Verify All Applications
 
-On the client machine, add a hosts file entry:
+Test each origin application through the CDN:
 
 ```bash
-# Linux/macOS
-echo "<CDN_EDGE_PUBLIC_IP>  app.yourdomain.com" | sudo tee -a /etc/hosts
+CDN=<CDN_EDGE_IP>
 
-# Windows (run as Administrator)
-echo <CDN_EDGE_PUBLIC_IP>  app.yourdomain.com >> C:\Windows\System32\drivers\etc\hosts
+# Health check (CDN local)
+curl -sf "http://$CDN/health" | python3 -m json.tool
+
+# Landing page
+curl -sf -o /dev/null -w "/ : HTTP %{http_code}\n" "http://$CDN/"
+
+# Juice Shop
+curl -sf -o /dev/null -w "/juice-shop/ : HTTP %{http_code}\n" "http://$CDN/juice-shop/"
+
+# DVWA (follows redirect to login)
+curl -sf -o /dev/null -w "/dvwa/ : HTTP %{http_code}\n" -L "http://$CDN/dvwa/"
+
+# VAmPI API
+curl -sf "http://$CDN/vampi/users/v1" | python3 -m json.tool | head -5
+
+# httpbin headers (shows CDN headers in JSON)
+curl -sf "http://$CDN/httpbin/headers" | python3 -m json.tool | head -10
+
+# whoami (shows ALL headers the origin receives)
+curl -sf "http://$CDN/whoami/"
+
+# CSD Demo
+curl -sf -o /dev/null -w "/csd-demo/ : HTTP %{http_code}\n" "http://$CDN/csd-demo/"
 ```
 
-### Option C: Direct IP (Simplest)
+All paths should return HTTP 200 (DVWA returns 302 then 200 on follow).
 
-Access the CDN edge directly by IP. The NGINX config uses `server_name _` which accepts any hostname:
+### Verify CDN Headers at Origin
+
+The `/whoami/` endpoint shows every header the origin receives. When accessed through the CDN, it displays all 67+ vendor headers:
 
 ```bash
-curl -H "Host: app.yourdomain.com" "http://<CDN_EDGE_PUBLIC_IP>/path"
+curl -sf "http://$CDN/whoami/"
 ```
 
-## Step 3: Verify End-to-End
+Verify these key headers are present:
 
-### Request Flow Verification
-
-Send a request through the full chain and verify each hop:
-
-```bash
-# First request — cache MISS, full origin fetch through F5 XC
-curl -I "http://<CDN_EDGE_PUBLIC_IP>/"
-# Look for: X-Cache-Status: MISS
-
-# Second request — cache HIT, no origin contact
-curl -I "http://<CDN_EDGE_PUBLIC_IP>/"
-# Look for: X-Cache-Status: HIT
-```
-
-### Verify F5 XC Sees the Traffic
-
-In the F5 XC console:
-
-1. Navigate to **HTTP Load Balancers** > your load balancer
-2. Open **Requests** or **Security Analytics**
-3. Verify requests appear with the CDN edge's public IP as the source
-4. The `X-Forwarded-For` header will contain the original client IP (passed through by NGINX)
-
-### Verify WAF/Security Policies Apply
-
-If F5 XC has WAF or Bot Defense enabled, test that policies apply to traffic flowing through the CDN:
-
-```bash
-# Test WAF detection (SQL injection attempt through CDN)
-curl -I "http://<CDN_EDGE_PUBLIC_IP>/search?q=1%20OR%201=1"
-# F5 XC WAF should block this — the CDN edge forwards the request as-is
-```
-
-## Multi-Component Integration
-
-This CDN edge node is one modular component. A complete lab environment might include:
-
-| Component | Purpose | Deployed Separately |
+| Vendor | Header | Expected Value |
 |---|---|---|
-| **CDN Edge** (this component) | Caching, TLS termination | Azure VM + NGINX |
-| **F5 XC HTTP Load Balancer** | Security policies, routing | F5 XC Console/API |
-| **Origin Application** | Backend workload | Any cloud or on-prem |
-| **DNS Zone** | Name resolution | F5 XC DNS or external |
-| **WAF Policy** | Web application firewall | F5 XC Console/API |
+| Standard | `X-Forwarded-For` | `<your_ip>, <cdn_edge_ip>` |
+| Akamai | `True-Client-Ip` | `<your_ip>` |
+| Cloudflare | `Cf-Connecting-Ip` | `<your_ip>` |
+| CloudFront | `Cloudfront-Viewer-Country` | `US` |
+| Fastly | `Fastly-Client-Ip` | `<your_ip>` |
+| Azure FD | `X-Azure-Clientip` | `<your_ip>` |
 
-Each component is deployed and documented independently. The human operator shares each documentation link with the AI assistant, which reads the instructions and deploys each piece.
+### Cross-Reference Logs
 
-## F5 XC Origin Pool Configuration
+Compare access logs on both servers to verify the traffic flow:
 
-When configuring the F5 XC side, the origin pool should point to the actual backend application (not this CDN edge). The CDN edge's `proxy_pass` points to the F5 XC HTTP load balancer VIP, completing the chain:
+```bash
+# CDN edge log — shows your client IP as source
+ssh azureuser@<CDN_EDGE_IP> "sudo tail -5 /var/log/nginx/access.log"
+
+# Origin log — shows CDN edge IP as source
+ssh azureuser@<ORIGIN_IP> "sudo tail -5 /var/log/nginx/access.log"
+```
+
+The origin log should show the CDN edge IP as the connecting client, while the real client IP is carried in `X-Forwarded-For` and vendor-specific headers.
+
+### Cache Behavior
+
+```bash
+# First request — MISS (fetched from origin)
+curl -s -I "http://$CDN/whoami/" | grep X-Cache-Status
+
+# Second request — HIT (served from CDN cache)
+curl -s -I "http://$CDN/whoami/" | grep X-Cache-Status
+```
+
+## Stage 2: F5 XC Insertion (Security Demo)
+
+After baseline testing, insert an F5 XC HTTP load balancer between the CDN and origin:
 
 ```
-CDN Edge (proxy_pass) → F5 XC HTTP LB VIP → Origin Pool → Backend App
+┌──────────┐     ┌────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  Client   │────▶│  CDN Edge      │────▶│  F5 XC HTTP LB   │────▶│  Origin Server  │
+│           │     │  (NGINX)       │     │  WAF + Bot + API  │     │                 │
+└──────────┘     └────────────────┘     └──────────────────┘     └─────────────────┘
 ```
 
-The F5 XC HTTP load balancer is configured through other lab components (WAF, Bot Defense, etc.). This component only handles the CDN edge layer.
+1. **Create the F5 XC HTTP load balancer** with the origin server in its origin pool
+2. **Update the CDN edge** to point to the F5 XC VIP instead of the origin directly:
+
+```bash
+ssh azureuser@<CDN_EDGE_IP>
+sudo sed -i 's|proxy_pass .*;|proxy_pass https://<F5XC_LB_VIP>;|' /etc/nginx/conf.d/cdn-edge.conf
+sudo rm -rf /var/cache/nginx/cdn/*
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+3. **Verify WAF enforcement** through the full chain:
+
+```bash
+# SQL injection through CDN → F5 XC WAF should block
+curl -I "http://$CDN/dvwa/vulnerabilities/sqli/?id=%27+OR+1%3D1--"
+
+# Normal request should pass
+curl -sf -o /dev/null -w "%{http_code}" "http://$CDN/juice-shop/"
+```
+
+4. **Configure Trusted Client IP Header** in F5 XC to read the real client IP from CDN headers (e.g., `True-Client-IP` for Akamai simulation, `CF-Connecting-IP` for Cloudflare simulation)
+
+## Multi-Component Architecture
+
+| Component | Repository | Purpose |
+|---|---|---|
+| **CDN Edge** (this) | [cdn-simulator](https://github.com/f5xc-salesdemos/cdn-simulator) | Caching, vendor headers |
+| **Origin Server** | [origin-server](https://github.com/f5xc-salesdemos/origin-server) | Vulnerable web apps |
+| **F5 XC Config** | Various (waf, api-protection, bot-*, etc.) | Security policies |
+
+Each component publishes documentation that AI assistants read to deploy the infrastructure. The origin-server publishes an [endpoint manifest](https://github.com/f5xc-salesdemos/origin-server/releases/latest) as a GitHub Release artifact listing all application paths and health checks.
