@@ -4,9 +4,9 @@ variable "subscription_id" {
 }
 
 variable "resource_group_name" {
-  description = "Name for the Azure resource group"
+  description = "Name for the Azure resource group (leave empty to auto-generate from your Azure identity)"
   type        = string
-  default     = "rg-cdn-simulator"
+  default     = ""
 }
 
 variable "location" {
