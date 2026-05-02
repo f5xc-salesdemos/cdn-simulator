@@ -64,7 +64,7 @@ variable "disk_size_gb" {
 # ---------------------------------------------------------
 
 variable "origin_server" {
-  description = "Origin server URL that the CDN edge forwards cache misses to (e.g., https://72.19.3.185 for F5 XC, or http://origin-ip for direct)"
+  description = "Origin server URL for cache miss forwarding (e.g., an HTTPS VIP or a direct HTTP origin IP)"
   type        = string
 }
 
