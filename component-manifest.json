@@ -1,15 +1,144 @@
 {
-  "schema_version": "1",
+  "schema_version": "2",
   "name": "cdn-simulator",
+  "display_name": "CDN Simulator",
   "role": "NGINX-based CDN edge node simulator",
   "category": "lab-infrastructure",
   "summary": "Azure Ubuntu 24.04 VM running NGINX as a CDN edge node simulator with 67+ vendor-specific headers (Akamai, Cloudflare, CloudFront, Fastly, Azure Front Door), cache behavior simulation, and origin pull for testing F5 XC CDN integration scenarios",
+
   "provides": ["cdn-edge-simulation", "vendor-header-injection", "cache-behavior-testing", "origin-pull"],
   "pairs_with": ["origin-server"],
   "demos": ["cdn"],
+
   "terraform": {
-    "required_vars": ["subscription_id", "origin_server", "origin_host"],
-    "vm_size": "Standard_F4s_v2",
-    "estimated_monthly_cost": "$122"
+    "required_inputs": {
+      "subscription_id": {
+        "type": "string",
+        "description": "Azure subscription ID"
+      },
+      "origin_server": {
+        "type": "string",
+        "description": "Origin server URL that the CDN edge forwards cache misses to"
+      },
+      "origin_host": {
+        "type": "string",
+        "description": "Origin server host:port for NGINX upstream (no scheme)"
+      }
+    },
+    "optional_inputs": {
+      "deployer": {
+        "type": "string",
+        "default": "",
+        "description": "Override for deployer identifier (auto-resolved from Azure AD if empty)"
+      },
+      "location": {
+        "type": "string",
+        "default": "eastus2",
+        "description": "Azure region for all resources"
+      },
+      "environment": {
+        "type": "string",
+        "default": "lab",
+        "description": "Environment label used in resource group naming and tags"
+      },
+      "vm_size": {
+        "type": "string",
+        "default": "Standard_F4s_v2",
+        "description": "Azure VM size"
+      },
+      "disk_size_gb": {
+        "type": "number",
+        "default": 30,
+        "description": "OS disk size in GB"
+      },
+      "admin_username": {
+        "type": "string",
+        "default": "azureuser",
+        "description": "SSH admin username for the VM"
+      },
+      "ssh_public_key_path": {
+        "type": "string",
+        "default": "~/.ssh/id_ed25519.pub",
+        "description": "Path to the SSH public key file"
+      },
+      "tags": {
+        "type": "map(string)",
+        "default": {},
+        "description": "Additional tags merged with standard tags"
+      }
+    },
+    "standard_outputs": [
+      "deployer",
+      "resource_group_name",
+      "resource_group_id",
+      "location",
+      "public_ip",
+      "private_ip",
+      "ssh_command",
+      "vm_name",
+      "vm_id",
+      "nsg_name",
+      "nsg_id",
+      "vnet_name",
+      "subnet_id",
+      "component",
+      "environment"
+    ],
+    "component_outputs": {
+      "edge_url": {
+        "type": "string",
+        "description": "HTTP URL of the CDN edge node"
+      },
+      "health_check_url": {
+        "type": "string",
+        "description": "Health check endpoint"
+      }
+    },
+    "estimated_monthly_cost": "$122",
+    "vm_image": {
+      "publisher": "Canonical",
+      "offer": "ubuntu-24_04-lts",
+      "sku": "server",
+      "version": "latest"
+    }
+  },
+
+  "nsg_rules": [
+    {
+      "name": "AllowHTTP",
+      "priority": 100,
+      "direction": "Inbound",
+      "access": "Allow",
+      "protocol": "Tcp",
+      "destination_port_range": "80",
+      "source_address_prefix": "*",
+      "description": "HTTP traffic for CDN edge requests"
+    },
+    {
+      "name": "AllowHTTPS",
+      "priority": 110,
+      "direction": "Inbound",
+      "access": "Allow",
+      "protocol": "Tcp",
+      "destination_port_range": "443",
+      "source_address_prefix": "*",
+      "description": "HTTPS traffic for CDN edge requests"
+    },
+    {
+      "name": "AllowSSH",
+      "priority": 120,
+      "direction": "Inbound",
+      "access": "Allow",
+      "protocol": "Tcp",
+      "destination_port_range": "22",
+      "source_address_prefix": "*",
+      "description": "SSH access for administration"
+    }
+  ],
+
+  "health_check": {
+    "path": "/health",
+    "port": 80,
+    "expected_status": 200
   }
 }
