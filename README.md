@@ -1,3 +1,17 @@
+🌐 English |
+[日本語](https://f5xc-salesdemos.github.io/cdn-simulator/ja/) |
+[한국어](https://f5xc-salesdemos.github.io/cdn-simulator/ko/) |
+[简体中文](https://f5xc-salesdemos.github.io/cdn-simulator/zh-cn/) |
+[繁體中文](https://f5xc-salesdemos.github.io/cdn-simulator/zh-tw/) |
+[Español](https://f5xc-salesdemos.github.io/cdn-simulator/es/) |
+[Português](https://f5xc-salesdemos.github.io/cdn-simulator/pt-br/) |
+[Français](https://f5xc-salesdemos.github.io/cdn-simulator/fr/) |
+[Deutsch](https://f5xc-salesdemos.github.io/cdn-simulator/de/) |
+[Italiano](https://f5xc-salesdemos.github.io/cdn-simulator/it/) |
+[العربية](https://f5xc-salesdemos.github.io/cdn-simulator/ar/) |
+[हिन्दी](https://f5xc-salesdemos.github.io/cdn-simulator/hi/) |
+[ไทย](https://f5xc-salesdemos.github.io/cdn-simulator/th/)
+
 # CDN Simulator
 
 [![GitHub Pages Deploy](https://github.com/f5xc-salesdemos/cdn-simulator/actions/workflows/github-pages-deploy.yml/badge.svg)](https://github.com/f5xc-salesdemos/cdn-simulator/actions/workflows/github-pages-deploy.yml)
