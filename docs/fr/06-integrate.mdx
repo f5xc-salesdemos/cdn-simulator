@@ -22,12 +22,12 @@ Commencez par l'intégration directe pour établir la référence, puis insérez
 
 ## Référence du Serveur d'origine
 
-Le composant de laboratoire [origin-server](https://f5xc-salesdemos.github.io/origin-server/) fournit des applications web vulnérables pour les tests de sécurité.
+Le composant de laboratoire [origin-server](https://f5-sales-demo.github.io/origin-server/) fournit des applications web vulnérables pour les tests de sécurité.
 
 | Propriété | Valeur |
 |---|---|
-| Documentation | [f5xc-salesdemos.github.io/origin-server](https://f5xc-salesdemos.github.io/origin-server/) |
-| Référentiel | [github.com/f5xc-salesdemos/origin-server](https://github.com/f5xc-salesdemos/origin-server) |
+| Documentation | [f5-sales-demo.github.io/origin-server](https://f5-sales-demo.github.io/origin-server/) |
+| Référentiel | [github.com/f5-sales-demo/origin-server](https://github.com/f5-sales-demo/origin-server) |
 | Port par défaut | 80 |
 | Vérification de l'état | `GET /health` |
 
@@ -36,7 +36,7 @@ Le composant de laboratoire [origin-server](https://f5xc-salesdemos.github.io/or
 Récupérez le catalogue d'applications actuel depuis le manifeste publié du serveur d'origine :
 
 ```bash
-MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5xc-salesdemos/origin-server/releases/latest \
+MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5-sales-demo/origin-server/releases/latest \
   | python3 -c "import sys,json; assets=json.load(sys.stdin).get('assets',[]); print(next((a['browser_download_url'] for a in assets if a['name']=='manifest.json'),''))")
 curl -sf "$MANIFEST_URL" | python3 -m json.tool
 ```
@@ -44,7 +44,7 @@ curl -sf "$MANIFEST_URL" | python3 -m json.tool
 Si aucune version n'existe encore, utilisez directement la source du référentiel :
 
 ```bash
-curl -sf https://raw.githubusercontent.com/f5xc-salesdemos/origin-server/main/manifest.json | python3 -m json.tool
+curl -sf https://raw.githubusercontent.com/f5-sales-demo/origin-server/main/manifest.json | python3 -m json.tool
 ```
 
 Le manifeste répertorie tous les chemins d'application, les vérifications d'état, les images de conteneurs et les correspondances de fonctionnalités de démonstration.
@@ -205,8 +205,8 @@ curl -sf -o /dev/null -w "%{http_code}" "http://$CDN/juice-shop/"
 
 | Composant | Référentiel | Objectif |
 |---|---|---|
-| **CDN Edge** (celui-ci) | [cdn-simulator](https://github.com/f5xc-salesdemos/cdn-simulator) | Mise en cache, en-têtes fournisseur |
-| **Serveur d'origine** | [origin-server](https://github.com/f5xc-salesdemos/origin-server) | Applications web vulnérables |
+| **CDN Edge** (celui-ci) | [cdn-simulator](https://github.com/f5-sales-demo/cdn-simulator) | Mise en cache, en-têtes fournisseur |
+| **Serveur d'origine** | [origin-server](https://github.com/f5-sales-demo/origin-server) | Applications web vulnérables |
 | **Configuration F5 XC** | Divers (waf, api-protection, bot-*, etc.) | Politiques de sécurité |
 
-Chaque composant publie de la documentation que les assistants IA lisent pour déployer l'infrastructure. Le serveur d'origine publie un [manifeste de points de terminaison](https://github.com/f5xc-salesdemos/origin-server/releases/latest) en tant qu'artefact de version GitHub répertoriant tous les chemins d'application et les vérifications d'état.
+Chaque composant publie de la documentation que les assistants IA lisent pour déployer l'infrastructure. Le serveur d'origine publie un [manifeste de points de terminaison](https://github.com/f5-sales-demo/origin-server/releases/latest) en tant qu'artefact de version GitHub répertoriant tous les chemins d'application et les vérifications d'état.

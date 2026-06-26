@@ -20,12 +20,12 @@ i18n:
 
 ## オリジンサーバーリファレンス
 
-[origin-server](https://f5xc-salesdemos.github.io/origin-server/) ラボコンポーネントは、セキュリティテスト用の脆弱な Web アプリケーションを提供します。
+[origin-server](https://f5-sales-demo.github.io/origin-server/) ラボコンポーネントは、セキュリティテスト用の脆弱な Web アプリケーションを提供します。
 
 | プロパティ | 値 |
 |---|---|
-| ドキュメント | [f5xc-salesdemos.github.io/origin-server](https://f5xc-salesdemos.github.io/origin-server/) |
-| リポジトリ | [github.com/f5xc-salesdemos/origin-server](https://github.com/f5xc-salesdemos/origin-server) |
+| ドキュメント | [f5-sales-demo.github.io/origin-server](https://f5-sales-demo.github.io/origin-server/) |
+| リポジトリ | [github.com/f5-sales-demo/origin-server](https://github.com/f5-sales-demo/origin-server) |
 | デフォルトポート | 80 |
 | ヘルスチェック | `GET /health` |
 
@@ -34,7 +34,7 @@ i18n:
 オリジンサーバーの公開マニフェストから現在のアプリケーションカタログを取得します：
 
 ```bash
-MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5xc-salesdemos/origin-server/releases/latest \
+MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5-sales-demo/origin-server/releases/latest \
   | python3 -c "import sys,json; assets=json.load(sys.stdin).get('assets',[]); print(next((a['browser_download_url'] for a in assets if a['name']=='manifest.json'),''))")
 curl -sf "$MANIFEST_URL" | python3 -m json.tool
 ```
@@ -42,7 +42,7 @@ curl -sf "$MANIFEST_URL" | python3 -m json.tool
 リリースがまだ存在しない場合は、リポジトリのソースを直接使用します：
 
 ```bash
-curl -sf https://raw.githubusercontent.com/f5xc-salesdemos/origin-server/main/manifest.json | python3 -m json.tool
+curl -sf https://raw.githubusercontent.com/f5-sales-demo/origin-server/main/manifest.json | python3 -m json.tool
 ```
 
 マニフェストには、すべてのアプリケーションパス、ヘルスチェック、コンテナイメージ、およびデモ機能のマッピングが記載されています。
@@ -203,8 +203,8 @@ curl -sf -o /dev/null -w "%{http_code}" "http://$CDN/juice-shop/"
 
 | コンポーネント | リポジトリ | 目的 |
 |---|---|---|
-| **CDN エッジ**（本リポジトリ） | [cdn-simulator](https://github.com/f5xc-salesdemos/cdn-simulator) | キャッシュ、ベンダーヘッダー |
-| **オリジンサーバー** | [origin-server](https://github.com/f5xc-salesdemos/origin-server) | 脆弱な Web アプリ |
+| **CDN エッジ**（本リポジトリ） | [cdn-simulator](https://github.com/f5-sales-demo/cdn-simulator) | キャッシュ、ベンダーヘッダー |
+| **オリジンサーバー** | [origin-server](https://github.com/f5-sales-demo/origin-server) | 脆弱な Web アプリ |
 | **F5 XC 設定** | 各種（waf、api-protection、bot-* など） | セキュリティポリシー |
 
-各コンポーネントは、AI アシスタントがインフラをデプロイするために読み取るドキュメントを公開しています。オリジンサーバーは、すべてのアプリケーションパスとヘルスチェックを一覧表示する[エンドポイントマニフェスト](https://github.com/f5xc-salesdemos/origin-server/releases/latest)を GitHub リリースアーティファクトとして公開しています。
+各コンポーネントは、AI アシスタントがインフラをデプロイするために読み取るドキュメントを公開しています。オリジンサーバーは、すべてのアプリケーションパスとヘルスチェックを一覧表示する[エンドポイントマニフェスト](https://github.com/f5-sales-demo/origin-server/releases/latest)を GitHub リリースアーティファクトとして公開しています。

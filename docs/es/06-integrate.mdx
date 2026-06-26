@@ -22,12 +22,12 @@ Comience con la integración directa para establecer la línea base y luego inse
 
 ## Referencia del Servidor de Origen
 
-El componente de laboratorio [origin-server](https://f5xc-salesdemos.github.io/origin-server/) proporciona aplicaciones web vulnerables para pruebas de seguridad.
+El componente de laboratorio [origin-server](https://f5-sales-demo.github.io/origin-server/) proporciona aplicaciones web vulnerables para pruebas de seguridad.
 
 | Propiedad | Valor |
 |---|---|
-| Documentación | [f5xc-salesdemos.github.io/origin-server](https://f5xc-salesdemos.github.io/origin-server/) |
-| Repositorio | [github.com/f5xc-salesdemos/origin-server](https://github.com/f5xc-salesdemos/origin-server) |
+| Documentación | [f5-sales-demo.github.io/origin-server](https://f5-sales-demo.github.io/origin-server/) |
+| Repositorio | [github.com/f5-sales-demo/origin-server](https://github.com/f5-sales-demo/origin-server) |
 | Puerto predeterminado | 80 |
 | Verificación de estado | `GET /health` |
 
@@ -36,7 +36,7 @@ El componente de laboratorio [origin-server](https://f5xc-salesdemos.github.io/o
 Obtenga el catálogo de aplicaciones actual desde el manifiesto publicado del servidor de origen:
 
 ```bash
-MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5xc-salesdemos/origin-server/releases/latest \
+MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5-sales-demo/origin-server/releases/latest \
   | python3 -c "import sys,json; assets=json.load(sys.stdin).get('assets',[]); print(next((a['browser_download_url'] for a in assets if a['name']=='manifest.json'),''))")
 curl -sf "$MANIFEST_URL" | python3 -m json.tool
 ```
@@ -44,7 +44,7 @@ curl -sf "$MANIFEST_URL" | python3 -m json.tool
 Si aún no existe ninguna versión, utilice directamente el código fuente del repositorio:
 
 ```bash
-curl -sf https://raw.githubusercontent.com/f5xc-salesdemos/origin-server/main/manifest.json | python3 -m json.tool
+curl -sf https://raw.githubusercontent.com/f5-sales-demo/origin-server/main/manifest.json | python3 -m json.tool
 ```
 
 El manifiesto lista todas las rutas de aplicación, verificaciones de estado, imágenes de contenedor y asignaciones de características de demostración.
@@ -205,8 +205,8 @@ curl -sf -o /dev/null -w "%{http_code}" "http://$CDN/juice-shop/"
 
 | Componente | Repositorio | Propósito |
 |---|---|---|
-| **CDN Edge** (este) | [cdn-simulator](https://github.com/f5xc-salesdemos/cdn-simulator) | Caché, encabezados de proveedor |
-| **Servidor de Origen** | [origin-server](https://github.com/f5xc-salesdemos/origin-server) | Aplicaciones web vulnerables |
+| **CDN Edge** (este) | [cdn-simulator](https://github.com/f5-sales-demo/cdn-simulator) | Caché, encabezados de proveedor |
+| **Servidor de Origen** | [origin-server](https://github.com/f5-sales-demo/origin-server) | Aplicaciones web vulnerables |
 | **Configuración F5 XC** | Varios (waf, api-protection, bot-*, etc.) | Políticas de seguridad |
 
-Cada componente publica documentación que los asistentes de IA leen para desplegar la infraestructura. El servidor de origen publica un [manifiesto de endpoints](https://github.com/f5xc-salesdemos/origin-server/releases/latest) como artefacto de GitHub Release que lista todas las rutas de aplicación y verificaciones de estado.
+Cada componente publica documentación que los asistentes de IA leen para desplegar la infraestructura. El servidor de origen publica un [manifiesto de endpoints](https://github.com/f5-sales-demo/origin-server/releases/latest) como artefacto de GitHub Release que lista todas las rutas de aplicación y verificaciones de estado.

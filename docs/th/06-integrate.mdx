@@ -21,12 +21,12 @@ i18n:
 
 ## ข้อมูลอ้างอิงเซิร์ฟเวอร์ต้นทาง
 
-ส่วนประกอบห้องปฏิบัติการ [origin-server](https://f5xc-salesdemos.github.io/origin-server/) ให้บริการแอปพลิเคชันเว็บที่มีช่องโหว่สำหรับการทดสอบความปลอดภัย
+ส่วนประกอบห้องปฏิบัติการ [origin-server](https://f5-sales-demo.github.io/origin-server/) ให้บริการแอปพลิเคชันเว็บที่มีช่องโหว่สำหรับการทดสอบความปลอดภัย
 
 | คุณสมบัติ | ค่า |
 |---|---|
-| เอกสาร | [f5xc-salesdemos.github.io/origin-server](https://f5xc-salesdemos.github.io/origin-server/) |
-| ที่เก็บโค้ด | [github.com/f5xc-salesdemos/origin-server](https://github.com/f5xc-salesdemos/origin-server) |
+| เอกสาร | [f5-sales-demo.github.io/origin-server](https://f5-sales-demo.github.io/origin-server/) |
+| ที่เก็บโค้ด | [github.com/f5-sales-demo/origin-server](https://github.com/f5-sales-demo/origin-server) |
 | พอร์ตเริ่มต้น | 80 |
 | การตรวจสอบสุขภาพ | `GET /health` |
 
@@ -35,7 +35,7 @@ i18n:
 ดึงแคตตาล็อกแอปพลิเคชันปัจจุบันจาก manifest ที่เผยแพร่ของ origin-server:
 
 ```bash
-MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5xc-salesdemos/origin-server/releases/latest \
+MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5-sales-demo/origin-server/releases/latest \
   | python3 -c "import sys,json; assets=json.load(sys.stdin).get('assets',[]); print(next((a['browser_download_url'] for a in assets if a['name']=='manifest.json'),''))")
 curl -sf "$MANIFEST_URL" | python3 -m json.tool
 ```
@@ -43,7 +43,7 @@ curl -sf "$MANIFEST_URL" | python3 -m json.tool
 หากยังไม่มี release ให้ใช้แหล่งที่มาของที่เก็บโค้ดโดยตรง:
 
 ```bash
-curl -sf https://raw.githubusercontent.com/f5xc-salesdemos/origin-server/main/manifest.json | python3 -m json.tool
+curl -sf https://raw.githubusercontent.com/f5-sales-demo/origin-server/main/manifest.json | python3 -m json.tool
 ```
 
 manifest แสดงรายการเส้นทางแอปพลิเคชัน การตรวจสอบสุขภาพ container image และการแมปฟีเจอร์สาธิตทั้งหมด
@@ -204,8 +204,8 @@ curl -sf -o /dev/null -w "%{http_code}" "http://$CDN/juice-shop/"
 
 | ส่วนประกอบ | ที่เก็บโค้ด | วัตถุประสงค์ |
 |---|---|---|
-| **CDN Edge** (นี่) | [cdn-simulator](https://github.com/f5xc-salesdemos/cdn-simulator) | การแคช, vendor headers |
-| **เซิร์ฟเวอร์ต้นทาง** | [origin-server](https://github.com/f5xc-salesdemos/origin-server) | แอปเว็บที่มีช่องโหว่ |
+| **CDN Edge** (นี่) | [cdn-simulator](https://github.com/f5-sales-demo/cdn-simulator) | การแคช, vendor headers |
+| **เซิร์ฟเวอร์ต้นทาง** | [origin-server](https://github.com/f5-sales-demo/origin-server) | แอปเว็บที่มีช่องโหว่ |
 | **F5 XC Config** | หลากหลาย (waf, api-protection, bot-*, ฯลฯ) | นโยบายความปลอดภัย |
 
-แต่ละส่วนประกอบเผยแพร่เอกสารที่ผู้ช่วย AI อ่านเพื่อ deploy โครงสร้างพื้นฐาน origin-server เผยแพร่ [endpoint manifest](https://github.com/f5xc-salesdemos/origin-server/releases/latest) เป็น GitHub Release artifact ที่แสดงรายการเส้นทางแอปพลิเคชันและการตรวจสอบสุขภาพทั้งหมด
+แต่ละส่วนประกอบเผยแพร่เอกสารที่ผู้ช่วย AI อ่านเพื่อ deploy โครงสร้างพื้นฐาน origin-server เผยแพร่ [endpoint manifest](https://github.com/f5-sales-demo/origin-server/releases/latest) เป็น GitHub Release artifact ที่แสดงรายการเส้นทางแอปพลิเคชันและการตรวจสอบสุขภาพทั้งหมด

@@ -22,12 +22,12 @@ Comece com a integração direta para estabelecer a linha de base e, em seguida,
 
 ## Referência do Servidor de Origem
 
-O componente de laboratório [origin-server](https://f5xc-salesdemos.github.io/origin-server/) fornece aplicações web vulneráveis para testes de segurança.
+O componente de laboratório [origin-server](https://f5-sales-demo.github.io/origin-server/) fornece aplicações web vulneráveis para testes de segurança.
 
 | Propriedade | Valor |
 |---|---|
-| Documentação | [f5xc-salesdemos.github.io/origin-server](https://f5xc-salesdemos.github.io/origin-server/) |
-| Repositório | [github.com/f5xc-salesdemos/origin-server](https://github.com/f5xc-salesdemos/origin-server) |
+| Documentação | [f5-sales-demo.github.io/origin-server](https://f5-sales-demo.github.io/origin-server/) |
+| Repositório | [github.com/f5-sales-demo/origin-server](https://github.com/f5-sales-demo/origin-server) |
 | Porta Padrão | 80 |
 | Verificação de Integridade | `GET /health` |
 
@@ -36,7 +36,7 @@ O componente de laboratório [origin-server](https://f5xc-salesdemos.github.io/o
 Obtenha o catálogo de aplicações atual a partir do manifesto publicado do servidor de origem:
 
 ```bash
-MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5xc-salesdemos/origin-server/releases/latest \
+MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5-sales-demo/origin-server/releases/latest \
   | python3 -c "import sys,json; assets=json.load(sys.stdin).get('assets',[]); print(next((a['browser_download_url'] for a in assets if a['name']=='manifest.json'),''))")
 curl -sf "$MANIFEST_URL" | python3 -m json.tool
 ```
@@ -44,7 +44,7 @@ curl -sf "$MANIFEST_URL" | python3 -m json.tool
 Se ainda não existir nenhuma versão, utilize diretamente o código-fonte do repositório:
 
 ```bash
-curl -sf https://raw.githubusercontent.com/f5xc-salesdemos/origin-server/main/manifest.json | python3 -m json.tool
+curl -sf https://raw.githubusercontent.com/f5-sales-demo/origin-server/main/manifest.json | python3 -m json.tool
 ```
 
 O manifesto lista todos os caminhos de aplicação, verificações de integridade, imagens de contêiner e mapeamentos de funcionalidades de demonstração.
@@ -205,8 +205,8 @@ curl -sf -o /dev/null -w "%{http_code}" "http://$CDN/juice-shop/"
 
 | Componente | Repositório | Finalidade |
 |---|---|---|
-| **CDN Edge** (este) | [cdn-simulator](https://github.com/f5xc-salesdemos/cdn-simulator) | Cache, cabeçalhos do fornecedor |
-| **Servidor de Origem** | [origin-server](https://github.com/f5xc-salesdemos/origin-server) | Aplicações web vulneráveis |
+| **CDN Edge** (este) | [cdn-simulator](https://github.com/f5-sales-demo/cdn-simulator) | Cache, cabeçalhos do fornecedor |
+| **Servidor de Origem** | [origin-server](https://github.com/f5-sales-demo/origin-server) | Aplicações web vulneráveis |
 | **Configuração F5 XC** | Diversos (waf, api-protection, bot-*, etc.) | Políticas de segurança |
 
-Cada componente publica documentação que os assistentes de IA leem para implantar a infraestrutura. O servidor de origem publica um [manifesto de endpoints](https://github.com/f5xc-salesdemos/origin-server/releases/latest) como um artefato de Release do GitHub, listando todos os caminhos de aplicação e verificações de integridade.
+Cada componente publica documentação que os assistentes de IA leem para implantar a infraestrutura. O servidor de origem publica um [manifesto de endpoints](https://github.com/f5-sales-demo/origin-server/releases/latest) como um artefato de Release do GitHub, listando todos os caminhos de aplicação e verificações de integridade.

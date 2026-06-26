@@ -19,12 +19,12 @@ i18n:
 
 ## 오리진 서버 참조
 
-[origin-server](https://f5xc-salesdemos.github.io/origin-server/) 랩 구성 요소는 보안 테스트를 위한 취약한 웹 애플리케이션을 제공합니다.
+[origin-server](https://f5-sales-demo.github.io/origin-server/) 랩 구성 요소는 보안 테스트를 위한 취약한 웹 애플리케이션을 제공합니다.
 
 | 속성 | 값 |
 |---|---|
-| 문서 | [f5xc-salesdemos.github.io/origin-server](https://f5xc-salesdemos.github.io/origin-server/) |
-| 저장소 | [github.com/f5xc-salesdemos/origin-server](https://github.com/f5xc-salesdemos/origin-server) |
+| 문서 | [f5-sales-demo.github.io/origin-server](https://f5-sales-demo.github.io/origin-server/) |
+| 저장소 | [github.com/f5-sales-demo/origin-server](https://github.com/f5-sales-demo/origin-server) |
 | 기본 포트 | 80 |
 | 헬스 체크 | `GET /health` |
 
@@ -33,7 +33,7 @@ i18n:
 오리진 서버의 게시된 매니페스트에서 현재 애플리케이션 카탈로그를 가져옵니다:
 
 ```bash
-MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5xc-salesdemos/origin-server/releases/latest \
+MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5-sales-demo/origin-server/releases/latest \
   | python3 -c "import sys,json; assets=json.load(sys.stdin).get('assets',[]); print(next((a['browser_download_url'] for a in assets if a['name']=='manifest.json'),''))")
 curl -sf "$MANIFEST_URL" | python3 -m json.tool
 ```
@@ -41,7 +41,7 @@ curl -sf "$MANIFEST_URL" | python3 -m json.tool
 릴리스가 아직 없는 경우 저장소 소스를 직접 사용합니다:
 
 ```bash
-curl -sf https://raw.githubusercontent.com/f5xc-salesdemos/origin-server/main/manifest.json | python3 -m json.tool
+curl -sf https://raw.githubusercontent.com/f5-sales-demo/origin-server/main/manifest.json | python3 -m json.tool
 ```
 
 매니페스트에는 모든 애플리케이션 경로, 헬스 체크, 컨테이너 이미지 및 데모 기능 매핑이 나열되어 있습니다.
@@ -202,8 +202,8 @@ curl -sf -o /dev/null -w "%{http_code}" "http://$CDN/juice-shop/"
 
 | 구성 요소 | 저장소 | 목적 |
 |---|---|---|
-| **CDN 시뮬레이터** (현재) | [cdn-simulator](https://github.com/f5xc-salesdemos/cdn-simulator) | 캐싱, 벤더 헤더 |
-| **오리진 서버** | [origin-server](https://github.com/f5xc-salesdemos/origin-server) | 취약한 웹 앱 |
+| **CDN 시뮬레이터** (현재) | [cdn-simulator](https://github.com/f5-sales-demo/cdn-simulator) | 캐싱, 벤더 헤더 |
+| **오리진 서버** | [origin-server](https://github.com/f5-sales-demo/origin-server) | 취약한 웹 앱 |
 | **F5 XC 구성** | 다양함 (waf, api-protection, bot-* 등) | 보안 정책 |
 
-각 구성 요소는 AI 어시스턴트가 인프라를 배포하기 위해 읽는 문서를 게시합니다. 오리진 서버는 모든 애플리케이션 경로와 헬스 체크를 나열하는 [엔드포인트 매니페스트](https://github.com/f5xc-salesdemos/origin-server/releases/latest)를 GitHub 릴리스 아티팩트로 게시합니다.
+각 구성 요소는 AI 어시스턴트가 인프라를 배포하기 위해 읽는 문서를 게시합니다. 오리진 서버는 모든 애플리케이션 경로와 헬스 체크를 나열하는 [엔드포인트 매니페스트](https://github.com/f5-sales-demo/origin-server/releases/latest)를 GitHub 릴리스 아티팩트로 게시합니다.

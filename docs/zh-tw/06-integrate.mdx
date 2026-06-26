@@ -19,12 +19,12 @@ i18n:
 
 ## 來源伺服器參考
 
-[origin-server](https://f5xc-salesdemos.github.io/origin-server/) 實驗室元件提供用於安全測試的易受攻擊網頁應用程式。
+[origin-server](https://f5-sales-demo.github.io/origin-server/) 實驗室元件提供用於安全測試的易受攻擊網頁應用程式。
 
 | 屬性 | 值 |
 |---|---|
-| 文件 | [f5xc-salesdemos.github.io/origin-server](https://f5xc-salesdemos.github.io/origin-server/) |
-| 儲存庫 | [github.com/f5xc-salesdemos/origin-server](https://github.com/f5xc-salesdemos/origin-server) |
+| 文件 | [f5-sales-demo.github.io/origin-server](https://f5-sales-demo.github.io/origin-server/) |
+| 儲存庫 | [github.com/f5-sales-demo/origin-server](https://github.com/f5-sales-demo/origin-server) |
 | 預設連接埠 | 80 |
 | 健康檢查 | `GET /health` |
 
@@ -33,7 +33,7 @@ i18n:
 從來源伺服器已發布的清單取得目前應用程式目錄：
 
 ```bash
-MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5xc-salesdemos/origin-server/releases/latest \
+MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5-sales-demo/origin-server/releases/latest \
   | python3 -c "import sys,json; assets=json.load(sys.stdin).get('assets',[]); print(next((a['browser_download_url'] for a in assets if a['name']=='manifest.json'),''))")
 curl -sf "$MANIFEST_URL" | python3 -m json.tool
 ```
@@ -41,7 +41,7 @@ curl -sf "$MANIFEST_URL" | python3 -m json.tool
 若尚未存在任何發行版，請直接使用儲存庫來源：
 
 ```bash
-curl -sf https://raw.githubusercontent.com/f5xc-salesdemos/origin-server/main/manifest.json | python3 -m json.tool
+curl -sf https://raw.githubusercontent.com/f5-sales-demo/origin-server/main/manifest.json | python3 -m json.tool
 ```
 
 清單列出所有應用程式路徑、健康檢查、容器映像檔及示範功能對應。
@@ -202,8 +202,8 @@ curl -sf -o /dev/null -w "%{http_code}" "http://$CDN/juice-shop/"
 
 | 元件 | 儲存庫 | 用途 |
 |---|---|---|
-| **CDN 邊緣**（本項） | [cdn-simulator](https://github.com/f5xc-salesdemos/cdn-simulator) | 快取、廠商標頭 |
-| **來源伺服器** | [origin-server](https://github.com/f5xc-salesdemos/origin-server) | 易受攻擊的網頁應用程式 |
+| **CDN 邊緣**（本項） | [cdn-simulator](https://github.com/f5-sales-demo/cdn-simulator) | 快取、廠商標頭 |
+| **來源伺服器** | [origin-server](https://github.com/f5-sales-demo/origin-server) | 易受攻擊的網頁應用程式 |
 | **F5 XC 設定** | 各種（waf、api-protection、bot-* 等） | 安全政策 |
 
-每個元件均發布 AI 助理用於部署基礎設施的文件。來源伺服器以 GitHub Release 成品形式發布[端點清單](https://github.com/f5xc-salesdemos/origin-server/releases/latest)，列出所有應用程式路徑與健康檢查。
+每個元件均發布 AI 助理用於部署基礎設施的文件。來源伺服器以 GitHub Release 成品形式發布[端點清單](https://github.com/f5-sales-demo/origin-server/releases/latest)，列出所有應用程式路徑與健康檢查。

@@ -19,12 +19,12 @@ i18n:
 
 ## 源服务器参考
 
-[origin-server](https://f5xc-salesdemos.github.io/origin-server/) 实验室组件提供用于安全测试的存在漏洞的 Web 应用程序。
+[origin-server](https://f5-sales-demo.github.io/origin-server/) 实验室组件提供用于安全测试的存在漏洞的 Web 应用程序。
 
 | 属性 | 值 |
 |---|---|
-| 文档 | [f5xc-salesdemos.github.io/origin-server](https://f5xc-salesdemos.github.io/origin-server/) |
-| 代码仓库 | [github.com/f5xc-salesdemos/origin-server](https://github.com/f5xc-salesdemos/origin-server) |
+| 文档 | [f5-sales-demo.github.io/origin-server](https://f5-sales-demo.github.io/origin-server/) |
+| 代码仓库 | [github.com/f5-sales-demo/origin-server](https://github.com/f5-sales-demo/origin-server) |
 | 默认端口 | 80 |
 | 健康检查 | `GET /health` |
 
@@ -33,7 +33,7 @@ i18n:
 从源服务器已发布的清单中获取当前应用程序目录：
 
 ```bash
-MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5xc-salesdemos/origin-server/releases/latest \
+MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5-sales-demo/origin-server/releases/latest \
   | python3 -c "import sys,json; assets=json.load(sys.stdin).get('assets',[]); print(next((a['browser_download_url'] for a in assets if a['name']=='manifest.json'),''))")
 curl -sf "$MANIFEST_URL" | python3 -m json.tool
 ```
@@ -41,7 +41,7 @@ curl -sf "$MANIFEST_URL" | python3 -m json.tool
 如果尚无发布版本，请直接使用代码仓库源：
 
 ```bash
-curl -sf https://raw.githubusercontent.com/f5xc-salesdemos/origin-server/main/manifest.json | python3 -m json.tool
+curl -sf https://raw.githubusercontent.com/f5-sales-demo/origin-server/main/manifest.json | python3 -m json.tool
 ```
 
 清单列出了所有应用程序路径、健康检查、容器镜像以及演示功能映射。
@@ -202,8 +202,8 @@ curl -sf -o /dev/null -w "%{http_code}" "http://$CDN/juice-shop/"
 
 | 组件 | 代码仓库 | 用途 |
 |---|---|---|
-| **CDN 边缘**（本组件） | [cdn-simulator](https://github.com/f5xc-salesdemos/cdn-simulator) | 缓存、厂商报头 |
-| **源服务器** | [origin-server](https://github.com/f5xc-salesdemos/origin-server) | 存在漏洞的 Web 应用程序 |
+| **CDN 边缘**（本组件） | [cdn-simulator](https://github.com/f5-sales-demo/cdn-simulator) | 缓存、厂商报头 |
+| **源服务器** | [origin-server](https://github.com/f5-sales-demo/origin-server) | 存在漏洞的 Web 应用程序 |
 | **F5 XC 配置** | 各类（waf、api-protection、bot-* 等） | 安全策略 |
 
-每个组件均发布供 AI 助手读取以部署基础设施的文档。源服务器以 GitHub Release 制品的形式发布[端点清单](https://github.com/f5xc-salesdemos/origin-server/releases/latest)，列出所有应用程序路径和健康检查信息。
+每个组件均发布供 AI 助手读取以部署基础设施的文档。源服务器以 GitHub Release 制品的形式发布[端点清单](https://github.com/f5-sales-demo/origin-server/releases/latest)，列出所有应用程序路径和健康检查信息。

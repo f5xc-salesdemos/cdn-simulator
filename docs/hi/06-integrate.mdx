@@ -21,12 +21,12 @@ i18n:
 
 ## ऑरिजिन सर्वर संदर्भ
 
-[origin-server](https://f5xc-salesdemos.github.io/origin-server/) लैब घटक सुरक्षा परीक्षण के लिए कमज़ोर वेब एप्लिकेशन प्रदान करता है।
+[origin-server](https://f5-sales-demo.github.io/origin-server/) लैब घटक सुरक्षा परीक्षण के लिए कमज़ोर वेब एप्लिकेशन प्रदान करता है।
 
 | गुण | मान |
 |---|---|
-| दस्तावेज़ीकरण | [f5xc-salesdemos.github.io/origin-server](https://f5xc-salesdemos.github.io/origin-server/) |
-| रिपॉज़िटरी | [github.com/f5xc-salesdemos/origin-server](https://github.com/f5xc-salesdemos/origin-server) |
+| दस्तावेज़ीकरण | [f5-sales-demo.github.io/origin-server](https://f5-sales-demo.github.io/origin-server/) |
+| रिपॉज़िटरी | [github.com/f5-sales-demo/origin-server](https://github.com/f5-sales-demo/origin-server) |
 | डिफ़ॉल्ट पोर्ट | 80 |
 | हेल्थ चेक | `GET /health` |
 
@@ -35,7 +35,7 @@ i18n:
 ऑरिजिन-सर्वर के प्रकाशित मेनिफेस्ट से वर्तमान एप्लिकेशन कैटलॉग प्राप्त करें:
 
 ```bash
-MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5xc-salesdemos/origin-server/releases/latest \
+MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5-sales-demo/origin-server/releases/latest \
   | python3 -c "import sys,json; assets=json.load(sys.stdin).get('assets',[]); print(next((a['browser_download_url'] for a in assets if a['name']=='manifest.json'),''))")
 curl -sf "$MANIFEST_URL" | python3 -m json.tool
 ```
@@ -43,7 +43,7 @@ curl -sf "$MANIFEST_URL" | python3 -m json.tool
 यदि अभी तक कोई रिलीज़ मौजूद नहीं है, तो रिपॉज़िटरी स्रोत का सीधे उपयोग करें:
 
 ```bash
-curl -sf https://raw.githubusercontent.com/f5xc-salesdemos/origin-server/main/manifest.json | python3 -m json.tool
+curl -sf https://raw.githubusercontent.com/f5-sales-demo/origin-server/main/manifest.json | python3 -m json.tool
 ```
 
 मेनिफेस्ट में सभी एप्लिकेशन पथ, हेल्थ चेक, कंटेनर इमेज और डेमो फ़ीचर मैपिंग सूचीबद्ध हैं।
@@ -204,8 +204,8 @@ curl -sf -o /dev/null -w "%{http_code}" "http://$CDN/juice-shop/"
 
 | घटक | रिपॉज़िटरी | उद्देश्य |
 |---|---|---|
-| **CDN Edge** (यह) | [cdn-simulator](https://github.com/f5xc-salesdemos/cdn-simulator) | कैशिंग, विक्रेता हेडर |
-| **ऑरिजिन सर्वर** | [origin-server](https://github.com/f5xc-salesdemos/origin-server) | कमज़ोर वेब ऐप |
+| **CDN Edge** (यह) | [cdn-simulator](https://github.com/f5-sales-demo/cdn-simulator) | कैशिंग, विक्रेता हेडर |
+| **ऑरिजिन सर्वर** | [origin-server](https://github.com/f5-sales-demo/origin-server) | कमज़ोर वेब ऐप |
 | **F5 XC Config** | विभिन्न (waf, api-protection, bot-*, आदि) | सुरक्षा नीतियाँ |
 
-प्रत्येक घटक दस्तावेज़ीकरण प्रकाशित करता है जिसे AI सहायक इंफ्रास्ट्रक्चर डिप्लॉय करने के लिए पढ़ते हैं। ऑरिजिन-सर्वर एक [एंडपॉइंट मेनिफेस्ट](https://github.com/f5xc-salesdemos/origin-server/releases/latest) GitHub Release आर्टिफ़ेक्ट के रूप में प्रकाशित करता है जिसमें सभी एप्लिकेशन पथ और हेल्थ चेक सूचीबद्ध हैं।
+प्रत्येक घटक दस्तावेज़ीकरण प्रकाशित करता है जिसे AI सहायक इंफ्रास्ट्रक्चर डिप्लॉय करने के लिए पढ़ते हैं। ऑरिजिन-सर्वर एक [एंडपॉइंट मेनिफेस्ट](https://github.com/f5-sales-demo/origin-server/releases/latest) GitHub Release आर्टिफ़ेक्ट के रूप में प्रकाशित करता है जिसमें सभी एप्लिकेशन पथ और हेल्थ चेक सूचीबद्ध हैं।
