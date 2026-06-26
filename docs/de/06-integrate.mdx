@@ -22,12 +22,12 @@ Beginnen Sie mit der direkten Integration, um die Basislinie zu etablieren, und 
 
 ## Ursprungsserver-Referenz
 
-Die [origin-server](https://f5xc-salesdemos.github.io/origin-server/)-Laborkomponente stellt anfällige Webanwendungen für Sicherheitstests bereit.
+Die [origin-server](https://f5-sales-demo.github.io/origin-server/)-Laborkomponente stellt anfällige Webanwendungen für Sicherheitstests bereit.
 
 | Eigenschaft | Wert |
 |---|---|
-| Dokumentation | [f5xc-salesdemos.github.io/origin-server](https://f5xc-salesdemos.github.io/origin-server/) |
-| Repository | [github.com/f5xc-salesdemos/origin-server](https://github.com/f5xc-salesdemos/origin-server) |
+| Dokumentation | [f5-sales-demo.github.io/origin-server](https://f5-sales-demo.github.io/origin-server/) |
+| Repository | [github.com/f5-sales-demo/origin-server](https://github.com/f5-sales-demo/origin-server) |
 | Standardport | 80 |
 | Integritätsprüfung | `GET /health` |
 
@@ -36,7 +36,7 @@ Die [origin-server](https://f5xc-salesdemos.github.io/origin-server/)-Laborkompo
 Rufen Sie den aktuellen Anwendungskatalog aus dem veröffentlichten Manifest des Ursprungsservers ab:
 
 ```bash
-MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5xc-salesdemos/origin-server/releases/latest \
+MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5-sales-demo/origin-server/releases/latest \
   | python3 -c "import sys,json; assets=json.load(sys.stdin).get('assets',[]); print(next((a['browser_download_url'] for a in assets if a['name']=='manifest.json'),''))")
 curl -sf "$MANIFEST_URL" | python3 -m json.tool
 ```
@@ -44,7 +44,7 @@ curl -sf "$MANIFEST_URL" | python3 -m json.tool
 Falls noch kein Release vorhanden ist, verwenden Sie direkt die Repository-Quelle:
 
 ```bash
-curl -sf https://raw.githubusercontent.com/f5xc-salesdemos/origin-server/main/manifest.json | python3 -m json.tool
+curl -sf https://raw.githubusercontent.com/f5-sales-demo/origin-server/main/manifest.json | python3 -m json.tool
 ```
 
 Das Manifest listet alle Anwendungspfade, Integritätsprüfungen, Container-Images und Demo-Feature-Zuordnungen auf.
@@ -205,8 +205,8 @@ curl -sf -o /dev/null -w "%{http_code}" "http://$CDN/juice-shop/"
 
 | Komponente | Repository | Zweck |
 |---|---|---|
-| **CDN-Edge** (diese) | [cdn-simulator](https://github.com/f5xc-salesdemos/cdn-simulator) | Caching, Anbieter-Header |
-| **Ursprungsserver** | [origin-server](https://github.com/f5xc-salesdemos/origin-server) | Anfällige Webanwendungen |
+| **CDN-Edge** (diese) | [cdn-simulator](https://github.com/f5-sales-demo/cdn-simulator) | Caching, Anbieter-Header |
+| **Ursprungsserver** | [origin-server](https://github.com/f5-sales-demo/origin-server) | Anfällige Webanwendungen |
 | **F5 XC-Konfiguration** | Verschiedene (waf, api-protection, bot-*, usw.) | Sicherheitsrichtlinien |
 
-Jede Komponente veröffentlicht Dokumentation, die KI-Assistenten lesen, um die Infrastruktur bereitzustellen. Der Ursprungsserver veröffentlicht ein [Endpunkt-Manifest](https://github.com/f5xc-salesdemos/origin-server/releases/latest) als GitHub-Release-Artefakt, das alle Anwendungspfade und Integritätsprüfungen auflistet.
+Jede Komponente veröffentlicht Dokumentation, die KI-Assistenten lesen, um die Infrastruktur bereitzustellen. Der Ursprungsserver veröffentlicht ein [Endpunkt-Manifest](https://github.com/f5-sales-demo/origin-server/releases/latest) als GitHub-Release-Artefakt, das alle Anwendungspfade und Integritätsprüfungen auflistet.

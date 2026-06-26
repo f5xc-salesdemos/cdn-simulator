@@ -21,12 +21,12 @@ i18n:
 
 ## مرجع خادم المصدر
 
-يوفر مكوّن المختبر [origin-server](https://f5xc-salesdemos.github.io/origin-server/) تطبيقات ويب تحتوي على ثغرات مخصصة لاختبار الأمان.
+يوفر مكوّن المختبر [origin-server](https://f5-sales-demo.github.io/origin-server/) تطبيقات ويب تحتوي على ثغرات مخصصة لاختبار الأمان.
 
 | الخاصية | القيمة |
 |---|---|
-| التوثيق | [f5xc-salesdemos.github.io/origin-server](https://f5xc-salesdemos.github.io/origin-server/) |
-| المستودع | [github.com/f5xc-salesdemos/origin-server](https://github.com/f5xc-salesdemos/origin-server) |
+| التوثيق | [f5-sales-demo.github.io/origin-server](https://f5-sales-demo.github.io/origin-server/) |
+| المستودع | [github.com/f5-sales-demo/origin-server](https://github.com/f5-sales-demo/origin-server) |
 | المنفذ الافتراضي | 80 |
 | فحص الصحة | `GET /health` |
 
@@ -35,7 +35,7 @@ i18n:
 استرجع كتالوج التطبيقات الحالي من بيان خادم المصدر المنشور:
 
 ```bash
-MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5xc-salesdemos/origin-server/releases/latest \
+MANIFEST_URL=$(curl -sf https://api.github.com/repos/f5-sales-demo/origin-server/releases/latest \
   | python3 -c "import sys,json; assets=json.load(sys.stdin).get('assets',[]); print(next((a['browser_download_url'] for a in assets if a['name']=='manifest.json'),''))")
 curl -sf "$MANIFEST_URL" | python3 -m json.tool
 ```
@@ -43,7 +43,7 @@ curl -sf "$MANIFEST_URL" | python3 -m json.tool
 إذا لم يكن هناك إصدار موجود بعد، استخدم مصدر المستودع مباشرةً:
 
 ```bash
-curl -sf https://raw.githubusercontent.com/f5xc-salesdemos/origin-server/main/manifest.json | python3 -m json.tool
+curl -sf https://raw.githubusercontent.com/f5-sales-demo/origin-server/main/manifest.json | python3 -m json.tool
 ```
 
 يسرد البيان جميع مسارات التطبيقات وفحوصات الصحة وصور الحاويات وتعيينات ميزات العرض التوضيحي.
@@ -204,8 +204,8 @@ curl -sf -o /dev/null -w "%{http_code}" "http://$CDN/juice-shop/"
 
 | المكوّن | المستودع | الغرض |
 |---|---|---|
-| **حافة CDN** (هذا) | [cdn-simulator](https://github.com/f5xc-salesdemos/cdn-simulator) | التخزين المؤقت وترويسات البائع |
-| **خادم المصدر** | [origin-server](https://github.com/f5xc-salesdemos/origin-server) | تطبيقات الويب المكشوفة |
+| **حافة CDN** (هذا) | [cdn-simulator](https://github.com/f5-sales-demo/cdn-simulator) | التخزين المؤقت وترويسات البائع |
+| **خادم المصدر** | [origin-server](https://github.com/f5-sales-demo/origin-server) | تطبيقات الويب المكشوفة |
 | **إعدادات F5 XC** | متنوعة (waf, api-protection, bot-*, إلخ) | سياسات الأمان |
 
-ينشر كل مكوّن وثائق تقرأها مساعدات الذكاء الاصطناعي لنشر البنية التحتية. يُصدر خادم المصدر [بيان نقطة النهاية](https://github.com/f5xc-salesdemos/origin-server/releases/latest) كأداة إصدار على GitHub تسرد جميع مسارات التطبيقات وفحوصات الصحة.
+ينشر كل مكوّن وثائق تقرأها مساعدات الذكاء الاصطناعي لنشر البنية التحتية. يُصدر خادم المصدر [بيان نقطة النهاية](https://github.com/f5-sales-demo/origin-server/releases/latest) كأداة إصدار على GitHub تسرد جميع مسارات التطبيقات وفحوصات الصحة.
